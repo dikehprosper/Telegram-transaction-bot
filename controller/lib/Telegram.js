@@ -70,6 +70,11 @@ function formatTransactionOnlyWithdrawal(transaction, index) {
 }
 
 async function handleMessage(messageObj) {
+    if (!messageObj || !messageObj.chat || !messageObj.chat.id) {
+        console.error("Invalid message object:", messageObj);
+        return;
+    }
+
     const messageText = messageObj.text || "";
     const userId = messageObj.chat.id;
 
