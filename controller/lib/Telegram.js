@@ -3,7 +3,7 @@
 /* eslint-disable no-undef */
 const fs = require('fs').promises;
 const { axiosInstance } = require("./axios");
-
+const { getTransactionsCollection } = require('../../db');
 // Directory for user transactions
 const TRANSACTION_DIR = 'transactions';
 
@@ -20,36 +20,14 @@ async function ensureTransactionDir() {
 
 // Helper function to save a transaction for a user
 async function saveTransaction(userId, transaction) {
-    const filePath = `${TRANSACTION_DIR}/${userId}.json`;
-    let transactions = [];
-
-    try {
-        const data = await fs.readFile(filePath, 'utf8');
-        transactions = JSON.parse(data);
-    } catch (error) {
-        if (error.code !== 'ENOENT') {
-            throw error;
-        }
-    }
-
-    transactions.push(transaction);
-    await fs.writeFile(filePath, JSON.stringify(transactions, null, 2));
+    const collection = await getTransactionsCollection();
+    await collection.insertOne({ userId, ...transaction });
 }
-
 
 // Helper function to get transactions for a user
 async function getTransactions(userId) {
-    const filePath = `${TRANSACTION_DIR}/${userId}.json`;
-
-    try {
-        const data = await fs.readFile(filePath, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        if (error.code === 'ENOENT') {
-            return []; // No transactions found
-        }
-        throw error;
-    }
+    const collection = await getTransactionsCollection();
+    return collection.find({ userId }).toArray();
 }
 
 // Format a transaction for display
