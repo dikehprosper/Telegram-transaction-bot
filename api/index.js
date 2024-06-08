@@ -2,7 +2,7 @@
 /* eslint-disable no-undef */
 const express = require("express");
 const PORT = process.env.PORT || 4040;
-const { handler } = require("./controller")
+const { handler } = require("../controller")
 const app = express();
 app.use(express.json());
 
