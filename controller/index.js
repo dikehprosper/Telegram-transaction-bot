@@ -1,16 +1,20 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-undef */
 /* eslint-disable @typescript-eslint/no-var-requires */
-const {handleMessage} = require("./lib/Telegram");
+/* eslint-disable no-undef */
+const { handleMessage } = require('./lib/Telegram');
 
-async function handler(req, method){
-    const { body } = req;
-    if (body) {
-        const messageObj = body.message;
-        await handleMessage(messageObj);
-        
+async function handler(req) {
+    const messageObj = req.body;
+    console.log("Received message object:", messageObj);
+    if (!messageObj || !messageObj.message) {
+        console.error("Invalid message object:", messageObj);
+        return;
     }
-    return;
+
+    try {
+        await handleMessage(messageObj.message);
+    } catch (error) {
+        console.error("Error handling message:", error);
+    }
 }
 
 module.exports = { handler };
