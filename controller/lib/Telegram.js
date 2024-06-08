@@ -1,21 +1,30 @@
-/* eslint-disable no-case-declarations */
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable no-undef */
-const fs = require('fs').promises;
-const { axiosInstance } = require("./axios");
+/* eslint-disable no-case-declarations */
 const { getTransactionsCollection } = require('../../db');
-// Directory for user transactions
-const TRANSACTION_DIR = 'transactions';
+const { axiosInstance } = require("./axios");
 
-// Ensure the transactions directory exists
-async function ensureTransactionDir() {
-    try {
-        await fs.mkdir(TRANSACTION_DIR);
-    } catch (error) {
-        if (error.code !== 'EEXIST') {
-            throw error;
-        }
+// In-memory user state storage
+let userStates = {};
+
+function sendMessage(messageObj, messageText) {
+    console.log("Sending message:", messageText);
+    return axiosInstance.get("sendMessage", {
+        chat_id: messageObj.chat.id,
+        text: messageText,
+    });
+}
+
+function handleUserAction(userId, action) {
+    console.log(`Handling user action: ${action} for user: ${userId}`);
+    // Initialize user state if it doesn't exist
+    if (!userStates[userId]) {
+        userStates[userId] = {};
     }
+
+    // Update user state
+    userStates[userId].action = action;
+    userStates[userId].step = 1; // Reset step to the beginning
 }
 
 // Helper function to save a transaction for a user
@@ -40,10 +49,11 @@ function formatTransaction(transaction, index) {
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        second: '2-digit'
+        second: '2-digit',
     });
     return `Transaction ${index + 1}:\nDate: ${formattedDate}\nID: ${transaction.id}\nAmount: ${transaction.amount}\nPhone Number: ${transaction.phoneNumber}\nNetwork: ${transaction.network}\nType: ${transaction.transactiontype}`;
 }
+
 // Format a transaction for display
 function formatTransactionOnlyWithdrawal(transaction, index) {
     const date = new Date(transaction.timestamp);
@@ -54,34 +64,9 @@ function formatTransactionOnlyWithdrawal(transaction, index) {
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        second: '2-digit'
+        second: '2-digit',
     });
     return `Transaction ${index + 1}:\nDate: ${formattedDate}\nID: ${transaction.id}\nPhone Number: ${transaction.phoneNumber}\nType: ${transaction.transactiontype}`;
-}
-
-// In-memory user state storage
-let userStates = {};
-
-function sendMessage(messageObj, messageText) {
-    console.log("Sending message:", messageText);
-    return axiosInstance.get("sendMessage", {
-    
-            chat_id: messageObj.chat.id,
-            text: messageText
-   
-    });
-}
-
-function handleUserAction(userId, action) {
-    console.log(`Handling user action: ${action} for user: ${userId}`);
-    // Initialize user state if it doesn't exist
-    if (!userStates[userId]) {
-        userStates[userId] = {};
-    }
-
-    // Update user state
-    userStates[userId].action = action;
-    userStates[userId].step = 1; // Reset step to the beginning
 }
 
 async function handleMessage(messageObj) {
@@ -110,9 +95,9 @@ async function handleMessage(messageObj) {
                 handleUserAction(userId, "withdraw");
                 return sendMessage(messageObj, "You are about to make a withdrawal, input your id.(e.g: 34377834).\n\nOr Press /cancel to terminate the current transaction process");
             case "cancel":
-                console.log("Initiating withdrawal process");
+                console.log("Cancelling transaction process");
                 delete userStates[userId];
-                return sendMessage(messageObj, "your ongoing transaction has been cancelled. \n\nClick /deposit to start a deposit process, \n/withdraw to start a withdrawal process or \n/transactions to see previous transactions");
+                return sendMessage(messageObj, "Your ongoing transaction has been cancelled. \n\nClick /deposit to start a deposit process, \n/withdraw to start a withdrawal process or \n/transactions to see previous transactions");
             case "transactions":
                 console.log("Fetching transactions");
                 delete userStates[userId];
@@ -246,10 +231,5 @@ async function handleMessage(messageObj) {
         }
     }
 }
-
-// Ensure the transaction directory exists before handling any messages
-ensureTransactionDir().then(() => {
-    console.log('Transaction directory initialized.');
-});
 
 module.exports = { handleMessage };

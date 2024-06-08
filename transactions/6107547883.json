@@ -1,0 +1,17 @@
+[
+  {
+    "id": "282383328",
+    "withdrawalCode": "Yaqui",
+    "phoneNumber": "+22999999999",
+    "transactiontype": "withdraw",
+    "timestamp": "2024-06-08T07:11:36.239Z"
+  },
+  {
+    "id": "66566667",
+    "amount": "5000",
+    "phoneNumber": "+22999999999",
+    "network": "mtn",
+    "transactiontype": "deposit",
+    "timestamp": "2024-06-08T07:28:32.517Z"
+  }
+]

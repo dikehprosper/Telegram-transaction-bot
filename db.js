@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable no-undef */
 const { MongoClient } = require('mongodb');
@@ -7,7 +8,7 @@ const uri = "mongodb+srv://Dikeprosper:Prosper12@espece.koqsh5m.mongodb.net/"; /
 const dbName = "betfundr";
 
 // Create a new MongoClient
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+const client = new MongoClient(uri);
 
 let db;
 
