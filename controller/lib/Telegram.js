@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable no-undef */
+/* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable no-case-declarations */
 const { getTransactionsCollection } = require('../../db');
 const { axiosInstance } = require("./axios");
@@ -70,6 +70,7 @@ function formatTransactionOnlyWithdrawal(transaction, index) {
 }
 
 async function handleMessage(messageObj) {
+    console.log("Handling message:", messageObj);
     if (!messageObj || !messageObj.chat || !messageObj.chat.id) {
         console.error("Invalid message object:", messageObj);
         return;
@@ -175,9 +176,10 @@ async function handleMessage(messageObj) {
                         transactiontype: 'deposit',
                         timestamp: new Date().toISOString()
                     };
+                    sendMessage(messageObj, `Deposit of ${userState.amount} has been processed for ID ${userState.id} on ${userState.network} network, using momo number ${userState.phoneNumber}. \n\n Click /deposit to start another deposit or click /withdraw to start a withdrawal or \n/transactions to see all your transactions`);
                     saveTransaction(userId, transaction).then(() => {
                         delete userStates[userId];
-                        return sendMessage(messageObj, `Deposit of ${userState.amount} has been processed for ID ${userState.id} on ${userState.network} network, using momo number ${userState.phoneNumber}. \n\n Click /deposit to start another deposit or click /withdraw to start a withdrawal or \n/transactions to see all your transactions`);
+                        return;
                     }).catch((error) => {
                         console.error("Error saving transaction:", error);
                         return sendMessage(messageObj, "An error occurred while processing your transaction. Please try again later.");
@@ -217,10 +219,11 @@ async function handleMessage(messageObj) {
                         transactiontype: 'withdraw',
                         timestamp: new Date().toISOString()
                     };
+                    sendMessage(messageObj, `Withdrawal for ID ${userState.id} with withdrawal code ${userState.withdrawalCode} and number ${userState.phoneNumber} has been processed.\n\nClick /withdraw to start another withdrawal or /deposit to perform a deposit or \n/transactions to see all your transactions.`);
                     saveTransaction(userId, transaction)
                         .then(() => {
                             delete userStates[userId];
-                            return sendMessage(messageObj, `Withdrawal for ID ${userState.id} with withdrawal code ${userState.withdrawalCode} and number ${userState.phoneNumber} has been processed.\n\nClick /withdraw to start another withdrawal or /deposit to perform a deposit or \n/transactions to see all your transactions.`);
+                            return;
                         })
                         .catch((error) => {
                             console.error("Error saving transaction:", error);
