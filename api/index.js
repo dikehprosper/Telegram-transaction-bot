@@ -7,6 +7,7 @@ const app = express();
 app.use(express.json());
 
 app.post("*", async (req, res) => {
+    res.send("hello ");
     res.send(await handler(req));
 })
 app.get("*", async (req, res) => {
