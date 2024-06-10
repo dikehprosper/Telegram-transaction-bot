@@ -64,3 +64,7 @@ Name - dikehprosper@gmail.com
 Project-Link: https://github.com/dikehprosper/Telegram-transaction-bot
 
 
+
+TEST
+
+Interact with the bot at https://t.me/transaction_bot_bot
