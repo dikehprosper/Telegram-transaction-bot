@@ -112,10 +112,18 @@ async function handleMessage(messageObj) {
                 // Set onGoingTransaction to true when starting a withdrawal
                 const lastWithdrawId = userLastIdsForWithdrawal[userId] || null;
                 const withdrawMessage = lastWithdrawId
-                    ? `Vous êtes sur le point de faire un retrait, répondez avec votre identifiant ou utilisez votre dernier identifiant en cliquant sur l'identifiant ci-dessous: \n\nIdentifiant précédent: /${lastWithdrawId}.\n\nAdresse:\nVille: abomey Calavi       Rue: FABLE WALLET EXCHANGE
-                    \n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours
-`
-                    : "Vous êtes sur le point de faire un retrait, répondez avec votre identifiant. (ex: 34377834).\n\nAdresse:\nVille: abomey Calavi         Rue: FABLE WALLET EXCHANGE\n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours"
+                    ? `Vous êtes sur le point de faire un retrait, répondez avec votre identifiant ou utilisez votre dernier identifiant en cliquant sur l'identifiant ci-dessous: \n\nIdentifiant précédent: /${lastWithdrawId}.
+                    \n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours \n\nProcédure de retrait 
+
+ 1-  S’assurer d’avoir repli son PROFIL PERSONNEL conformément aux informations de votre carde d’identité ou passeport 
+2- Sélectionner le menu retirer et ensuite 1XBET ESPÈCES
+3- Entrer le montant à retirer 
+5- Choisir ville: Parakou
+6-Choisir Rue : Zongo Rue 447  24/7
+7- Confirmer la transaction avec le CODE SMS obtenu sur notre numéro de téléphone 
+8- Patienter et une fois que le statut affiche APPROUVÉ , sélectionner OBTENIR LE CODE 
+9- Copier le code obtenu ( ce code contient quatre caractères) \n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours`
+                    : "Vous êtes sur le point de faire un retrait, répondez avec votre identifiant. (ex: 34377834).\n\nProcédure de retrait:\n\n1. S’assurer d’avoir rempli son PROFIL PERSONNEL conformément aux informations de votre carte d’identité ou passeport.\n2. Sélectionner le menu retirer et ensuite 1XBET ESPÈCES.\n3. Entrer le montant à retirer.\n4. Choisir ville: Parakou.\n5. Choisir Rue: Zongo Rue 447  24 / 7.\n6. Confirmer la transaction avec le CODE SMS obtenu sur notre numéro de téléphone.\n7. Patienter et une fois que le statut affiche APPROUVÉ, sélectionner OBTENIR LE CODE.\n8. Copier le code obtenu (ce code contient quatre caractères).\n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours"
                     ;
                 onGoingTransaction = false;
                 return sendMessage(messageObj, withdrawMessage);
@@ -221,20 +229,20 @@ async function handleMessage(messageObj) {
                         status: "pending"
                     };
 
-                    saveTransaction(userId, transaction)
-                        .then(() => {
-                            delete userStates[userId].action;
-                            delete userStates[userId].step;
-                            onGoingTransaction = false; // Reset onGoingTransaction when transaction is complete
+                    saveTransaction(userId, transaction).then(() => {
+                        delete userStates[userId].action;
+                        delete userStates[userId].step;
+                        onGoingTransaction = false; // Reset onGoingTransaction when transaction is complete
 
-                            return sendMessage(messageObj, `Le dépôt de ${userState.amount} est en cours de traitement pour l'identifiant ${userState.id} sur le réseau ${updatedMessageText}, en utilisant le numéro momo ${userState.phoneNumber}. \n\n Cliquez sur /deposit pour commencer un autre dépôt ou cliquez sur /withdraw pour commencer un retrait ou /transactions pour voir toutes vos transactions`);
-                        })
-                        .catch((error) => {
-                            console.error("Error saving transaction:", error);
-                            onGoingTransaction = false; // Reset onGoingTransaction in case of error
-                            return sendMessage(messageObj, "Une erreur s'est produite lors du traitement de votre transaction. Veuillez réessayer plus tard.");
-                        });
-
+                        return new Promise((resolve) => setTimeout(resolve, 100));
+                    }).then(() => {
+                        onGoingTransaction = false;
+                        return sendMessage(messageObj, `Le dépôt de ${userState.amount} est en cours de traitement pour l'identifiant ${userState.id} sur le réseau ${updatedMessageText}, en utilisant le numéro momo ${userState.phoneNumber}. \n\n Cliquez sur /deposit pour commencer un autre dépôt ou cliquez sur /withdraw pour commencer un retrait ou /transactions pour voir toutes vos transactions`);
+                    }).catch((error) => {
+                        console.error("Error saving transaction:", error);
+                        onGoingTransaction = false; // Reset onGoingTransaction in case of error
+                        return sendMessage(messageObj, "Une erreur s'est produite lors du traitement de votre transaction. Veuillez réessayer plus tard.");
+                    });
                 }
                 break;
 

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable no-undef */
 const { MongoClient } = require('mongodb');
-
+require('dotenv').config();
 // MongoDB connection URI and database name
 const uri = process.env.MY_URI; // Replace with your MongoDB connection string
 const dbName = "betfundr";
