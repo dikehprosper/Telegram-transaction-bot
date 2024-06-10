@@ -82,7 +82,7 @@ async function handleMessage(messageObj) {
 
     // Check for ongoing transaction
     if (onGoingTransaction && (!messageText.startsWith("/cancel") && !messageText.startsWith("/deposit") && !messageText.startsWith("/withdraw"))) {
-        return sendMessage(messageObj, "Another transaction is in progress. Please wait until it is completed or type /cancel to terminate the current transaction.");
+        return sendMessage(messageObj, "Une autre transaction est en cours. Veuillez attendre qu'elle soit terminée ou tapez /cancel pour annuler la transaction en cours.");
     }
 
     if (messageText === "/deposit" || messageText === "/withdraw" || messageText === "/start" || messageText === "/cancel" || messageText === "/transactions" || messageText === "deposit" || messageText === "withdraw" || messageText === "start" || messageText === "cancel" || messageText === "transactions") {
@@ -91,7 +91,7 @@ async function handleMessage(messageObj) {
         onGoingTransaction = true;
         switch (command) {
             case "start":
-                const startMessage = "Hi! Welcome to betfundr, let's help you process your transaction swiftly.\n\nClick /deposit to start a deposit process or click /withdraw to start a withdrawal process or /transactions to see all your previous transactions";
+                const startMessage = "Bonjour! Bienvenue chez betfundr, nous allons vous aider à traiter votre transaction rapidement.\n\nCliquez sur /deposit pour commencer un processus de dépôt ou cliquez sur /withdraw pour commencer un processus de retrait ou /transactions pour voir toutes vos transactions précédentes";
 
                 delete userStates[userId];
                 onGoingTransaction = false; // Reset onGoingTransaction when starting
@@ -102,8 +102,8 @@ async function handleMessage(messageObj) {
                 // Set onGoingTransaction to true when starting a deposit
                 const lastDepositId = userLastIdsForDeposit[userId] || null;
                 const depositMessage = lastDepositId
-                    ? `You are about to make a deposit, input your id or use your last ID by clicking the ID below: \n\nPrevious ID: /${lastDepositId}.\n\nOr Press /cancel to terminate the current transaction process`
-                    : "You are about to make a deposit, input your id.(e.g: 34377834).\n\nOr Press /cancel to terminate the current transaction process";
+                    ? `Vous êtes sur le point de faire un dépôt, entrez votre identifiant ou utilisez votre dernier identifiant en cliquant sur l'identifiant ci-dessous: \n\nIdentifiant précédent: /${lastDepositId}.\n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours`
+                    : "Vous êtes sur le point de faire un dépôt, entrez votre identifiant. (ex: 34377834).\n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours";
                 onGoingTransaction = false;
                 return sendMessage(messageObj, depositMessage);
 
@@ -112,32 +112,32 @@ async function handleMessage(messageObj) {
                 // Set onGoingTransaction to true when starting a withdrawal
                 const lastWithdrawId = userLastIdsForWithdrawal[userId] || null;
                 const withdrawMessage = lastWithdrawId
-                    ? `You are about to make a withdrawal, reply with your id or use your last ID by clicking the ID below: \n\nPrevious ID: /${lastWithdrawId}.
-                    \n\nOr Press /cancel to terminate the current transaction process \n\nProcédure de retrait 
+                    ? `You are about to make a withdrawal, reply with your ID or use your last ID by clicking the ID below: \n\nPrevious ID: /${lastWithdrawId}.
+        \n\nOr press /cancel to cancel the ongoing transaction process \n\nWithdrawal Procedure:
 
- 1-  S’assurer d’avoir repli son PROFIL PERSONNEL conformément aux informations de votre carde d’identité ou passeport 
-2- Sélectionner le menu retirer et ensuite 1XBET ESPÈCES
-3- Entrer le montant à retirer 
-5- Choisir ville: Parakou
-6-Choisir Rue : Zongo Rue 447  24/7
-7- Confirmer la transaction avec le CODE SMS obtenu sur notre numéro de téléphone 
-8- Patienter et une fois que le statut affiche APPROUVÉ , sélectionner OBTENIR LE CODE 
-9- Copier le code obtenu ( ce code contient quatre caractères) \n\nOr Press /cancel to terminate the current transaction process`
-                    : "You are about to make a withdrawal, reply with your id.(e.g: 34377834).\n\nProcédure de retrait:\n\n1. S’assurer d’avoir rempli son PROFIL PERSONNEL conformément aux informations de votre carte d’identité ou passeport.\n2. Sélectionner le menu retirer et ensuite 1XBET ESPÈCES.\n3. Entrer le montant à retirer.\n4. Choisir ville: Parakou.\n5. Choisir Rue: Zongo Rue 447  24 / 7.\n6. Confirmer la transaction avec le CODE SMS obtenu sur notre numéro de téléphone.\n7. Patienter et une fois que le statut affiche APPROUVÉ, sélectionner OBTENIR LE CODE.\n8. Copier le code obtenu (ce code contient quatre caractères).\n\nOr Press /cancel to terminate the current transaction process"
-                    ;
+1- Make sure your PERSONAL PROFILE is filled out according to the information on your ID card or passport
+2- Select the withdraw menu and then 1XBET CASH
+3- Enter the amount to withdraw
+4- Choose city: Parakou
+5- Choose Street: Zongo Street 447  24/7
+6- Confirm the transaction with the SMS CODE obtained on our phone number
+7- Wait and once the status shows APPROVED, select GET THE CODE
+8- Copy the obtained code (this code contains four characters) \n\nOr press /cancel to cancel the ongoing transaction process`
+                    : "You are about to make a withdrawal, reply with your ID. (e.g: 34377834).\n\nWithdrawal Procedure:\n\n1. Make sure your PERSONAL PROFILE is filled out according to the information on your ID card or passport.\n2. Select the withdraw menu and then 1XBET CASH.\n3. Enter the amount to withdraw.\n4. Choose city: Parakou.\n5. Choose Street: Zongo Street 447  24 / 7.\n6. Confirm the transaction with the SMS CODE obtained on our phone number.\n7. Wait and once the status shows APPROVED, select GET THE CODE.\n8. Copy the obtained code (this code contains four characters).\n\nOr press /cancel to cancel the ongoing transaction process";
                 onGoingTransaction = false;
                 return sendMessage(messageObj, withdrawMessage);
+
 
             case "cancel":
                 delete userStates[userId];
                 onGoingTransaction = false; // Reset onGoingTransaction when canceling
-                return sendMessage(messageObj, "Your ongoing transaction has been cancelled. \n\nClick /deposit to start a deposit process, \n/withdraw to start a withdrawal process or \n/transactions to see previous transactions");
+                return sendMessage(messageObj, "Votre transaction en cours a été annulée. \n\nCliquez sur /deposit pour commencer un processus de dépôt, \n/withdraw pour commencer un processus de retrait ou \n/transactions pour voir les transactions précédentes");
 
             case "transactions":
 
                 const transactions = await getTransactions(userId);
                 if (transactions.length === 0) {
-                    return sendMessage(messageObj, "No transactions found.");
+                    return sendMessage(messageObj, "Aucune transaction trouvée.");
                 }
                 const transactionList = transactions.map((t, index) => {
                     if (t.transactiontype === "withdraw") {
@@ -149,17 +149,17 @@ async function handleMessage(messageObj) {
                 onGoingTransaction = false;
                 console.log(transactionList)
                 if (transactionList.length > 500) {
-                    return sendMessage(messageObj, `Your transactions cant be returned because it too lengthy\n\nType /deposit to perform a deposit and \n/withdraw to perform a withdrawal.`);
+                    return sendMessage(messageObj, `Vos transactions ne peuvent pas être retournées car elles sont trop longues\n\nTapez /deposit pour effectuer un dépôt et \n/withdraw pour effectuer un retrait.`);
 
                 } else {
-                    return sendMessage(messageObj, `Your transactions:\n\n${transactionList}\n\nType /deposit to perform a deposit and \n/withdraw to perform a withdrawal.`);
+                    return sendMessage(messageObj, `Vos transactions:\n\n${transactionList}\n\nTapez /deposit pour effectuer un dépôt et \n/withdraw pour effectuer un retrait.`);
 
                 }
 
 
             default:
                 onGoingTransaction = false;
-                return sendMessage(messageObj, "Wrong entry");
+                return sendMessage(messageObj, "Entrée incorrecte");
         }
     }
 
@@ -173,13 +173,13 @@ async function handleMessage(messageObj) {
 
                     // Check if the id is numeric
                     if (!/^\d+$/.test(id)) {
-                        const lastDepositId = userLastIdsForDeposit[userId] || "No previous ID";
+                        const lastDepositId = userLastIdsForDeposit[userId] || "Pas d'identifiant précédent";
                         console.log(lastDepositId)
                         onGoingTransaction = false;
-                        if (lastDepositId === "No previous ID") {
-                            return sendMessage(messageObj, `Invalid ID. Input your ID.(e.g 23423434) \n\nOr Press /cancel to terminate the current transaction process`);
+                        if (lastDepositId === "Pas d'identifiant précédent") {
+                            return sendMessage(messageObj, `Identifiant invalide. Entrez votre identifiant.(ex: 23423434) \n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours`);
                         } else {
-                            return sendMessage(messageObj, `Invalid ID. Input your ID or use your last ID by clicking the ID below: \n\nPrevious ID: /${lastDepositId}\n\nOr Press /cancel to terminate the current transaction process`);
+                            return sendMessage(messageObj, `Identifiant invalide. Entrez votre identifiant ou utilisez votre dernier identifiant en cliquant sur l'identifiant ci-dessous: \n\nIdentifiant précédent: /${lastDepositId}\n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours`);
                         }
 
                     }
@@ -188,34 +188,34 @@ async function handleMessage(messageObj) {
                     userState.step++;
 
                     onGoingTransaction = false;
-                    return sendMessage(messageObj, "Please input the amount you wish to deposit.(e.g: 5000).\n\n Or Press /cancel to terminate the current transaction process");
+                    return sendMessage(messageObj, "Veuillez saisir le montant que vous souhaitez déposer. (ex: 5000).\n\n Ou appuyez sur /cancel pour annuler le processus de transaction en cours");
                 } else if (userState.step === 2) {
                     console.log("done")
                     const amount = parseFloat(messageText);
                     if (isNaN(amount) || amount < 200 || !/^\d+(\.\d{1,2})?$/.test(messageText)) {
-                        return sendMessage(messageObj, "Invalid amount. Please enter a numeric amount greater than or equal to 200 (e.g., 5000).\n\nOr Press /cancel to terminate the current transaction process");
+                        return sendMessage(messageObj, "Montant invalide. Veuillez entrer un montant numérique supérieur ou égal à 200 (ex: 5000).\n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours");
                     }
                     userState.amount = messageText;
                     userState.step++;
                     onGoingTransaction = false;
-                    return sendMessage(messageObj, "Please enter your phone number (without country code).(e.g: 99999999).\n\nOr Press /cancel to terminate the current transaction process");
+                    return sendMessage(messageObj, "Veuillez entrer votre numéro de téléphone (sans indicatif du pays). (ex: 99999999).\n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours");
                 } else if (userState.step === 3) {
                     // Validate the phone number input
                     if (!/^\d{8}$/.test(messageText)) { // Assuming phone number length is 8 digits
                         onGoingTransaction = false;
-                        return sendMessage(messageObj, "Invalid phone number. Please enter a valid numeric phone number.(e.g: 99999999).\n\nOr Press /cancel to terminate the current transaction process");
+                        return sendMessage(messageObj, "Numéro de téléphone invalide. Veuillez entrer un numéro de téléphone numérique valide. (ex: 99999999).\n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours");
                     }
                     userState.phoneNumber = messageText;
                     userState.step++;
                     onGoingTransaction = false;
-                    return sendMessage(messageObj, "Please enter your network. Click on your choice. \n\n   /MTN        /MOOV\n\nOr Press /cancel to terminate the current transaction process");
+                    return sendMessage(messageObj, "Veuillez entrer votre réseau. Cliquez sur votre choix. \n\n   /MTN        /MOOV\n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours");
                 }
                 else if (userState.step === 4) {
                     const updatedMessageText = messageText.startsWith('/') ? messageText.substr(1) : messageText;
                     const validNetworks = ["MTN", "MOOV"];
                     if (!validNetworks.includes(updatedMessageText)) {
                         onGoingTransaction = false;
-                        return sendMessage(messageObj, "Invalid network. Please Click on your choice. \n\n   /MTN        /MOOV\n\nOr Press /cancel to terminate the current transaction process");
+                        return sendMessage(messageObj, "Réseau invalide. Veuillez cliquer sur votre choix. \n\n   /MTN        /MOOV\n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours");
 
                     }
 
@@ -237,11 +237,11 @@ async function handleMessage(messageObj) {
                         return new Promise((resolve) => setTimeout(resolve, 100));
                     }).then(() => {
                         onGoingTransaction = false;
-                        return sendMessage(messageObj, `Deposit of ${userState.amount} is currently procesing for ID ${userState.id} on ${updatedMessageText} network, using momo number ${userState.phoneNumber}. \n\n Click /deposit to start another deposit or click /withdraw to start a withdrawal or /transactions to see all your transactions`);
+                        return sendMessage(messageObj, `Le dépôt de ${userState.amount} est en cours de traitement pour l'identifiant ${userState.id} sur le réseau ${updatedMessageText}, en utilisant le numéro momo ${userState.phoneNumber}. \n\n Cliquez sur /deposit pour commencer un autre dépôt ou cliquez sur /withdraw pour commencer un retrait ou /transactions pour voir toutes vos transactions`);
                     }).catch((error) => {
                         console.error("Error saving transaction:", error);
                         onGoingTransaction = false; // Reset onGoingTransaction in case of error
-                        return sendMessage(messageObj, "An error occurred while processing your transaction. Please try again later.");
+                        return sendMessage(messageObj, "Une erreur s'est produite lors du traitement de votre transaction. Veuillez réessayer plus tard.");
                     });
                 }
                 break;
@@ -252,32 +252,32 @@ async function handleMessage(messageObj) {
                         const id = messageText.startsWith('/') ? messageText.substr(1) : messageText;
                         // Check if the id is numeric
                         if (!/^\d+$/.test(id)) {
-                            const lastWithdrawId = userLastIdsForWithdrawal[userId] || "No previous ID";
+                            const lastWithdrawId = userLastIdsForWithdrawal[userId] || "Pas d'identifiant précédent";
                             onGoingTransaction = false;
-                            if (lastWithdrawId === "No previous ID") {
-                                return sendMessage(messageObj, `Invalid ID. Input your ID.(e.g 23423434) \n\nOr Press /cancel to terminate the current transaction process`);
+                            if (lastWithdrawId === "Pas d'identifiant précédent") {
+                                return sendMessage(messageObj, `Identifiant invalide. Entrez votre identifiant.(ex: 23423434) \n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours`);
                             } else {
-                                return sendMessage(messageObj, `Invalid ID. Input your ID or use your last ID by clicking the ID below: \n\nPrevious ID: /${lastWithdrawId}\n\nOr Press /cancel to terminate the current transaction process`);
+                                return sendMessage(messageObj, `Identifiant invalide. Entrez votre identifiant ou utilisez votre dernier identifiant en cliquant sur l'identifiant ci-dessous: \n\nIdentifiant précédent: /${lastWithdrawId}\n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours`);
                             }
                         }
                         userState.id = id;
                         userLastIdsForWithdrawal[userId] = id; // Save the ID in the separate state
                         userState.step++;
                         onGoingTransaction = false;
-                        return sendMessage(messageObj, "Please input your withdrawal code. \n\nOr Press /cancel to terminate the current transaction process");
+                        return sendMessage(messageObj, "Veuillez entrer votre code de retrait. \n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours");
                     }
                 } else if (userState.step === 2) {
                     if (!/^[a-zA-Z0-9]+$/.test(messageText)) { // Assuming withdrawal code can be alphanumeric, numeric, or alphabetic
-                        return sendMessage(messageObj, "Invalid withdrawal code. Please enter an alphanumeric code (e.g: 343778frgr), numeric code (e.g: 123456), or alphabetic code (e.g: ABCDEF). \n\nOr Press /cancel to terminate the current transaction process");
+                        return sendMessage(messageObj, "Code de retrait invalide. Veuillez entrer un code alphanumérique (ex: 343778frgr), un code numérique (ex: 123456), ou un code alphabétique (ex: ABCDEF). \n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours");
                     }
 
                     userState.withdrawalCode = messageText;
                     userState.step++;
                     onGoingTransaction = false;
-                    return sendMessage(messageObj, "Please enter your momo number (without country code). \n\nOr Press /cancel to terminate the current transaction process");
+                    return sendMessage(messageObj, "Veuillez entrer votre numéro momo (sans indicatif du pays). \n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours");
                 } else if (userState.step === 3) {
                     if (!/^\d{8}$/.test(messageText)) { // Assuming phone number length is 8 digits
-                        return sendMessage(messageObj, "Invalid phone number. Please enter a valid numeric phone number. \n\nOr Press /cancel to terminate the current transaction process");
+                        return sendMessage(messageObj, "Numéro de téléphone invalide. Veuillez entrer un numéro de téléphone numérique valide. \n\nOu appuyez sur /cancel pour annuler le processus de transaction en cours");
                     }
                     userState.phoneNumber = messageText;
                     const transaction = {
@@ -288,7 +288,7 @@ async function handleMessage(messageObj) {
                         timestamp: new Date().toISOString(),
                         status: "pending"
                     };
-                    sendMessage(messageObj, `Withdrawal for ID ${userState.id} with withdrawal code ${userState.withdrawalCode} and number ${userState.phoneNumber} is currently processing.\n\nClick /withdraw to start another withdrawal or /deposit to perform a deposit or /transactions to see all your transactions.`);
+                    sendMessage(messageObj, `Le retrait pour l'identifiant ${userState.id} avec le code de retrait ${userState.withdrawalCode} et le numéro ${userState.phoneNumber} est en cours de traitement.\n\nCliquez sur /withdraw pour commencer un autre retrait ou /deposit pour effectuer un dépôt ou /transactions pour voir toutes vos transactions.`);
                     saveTransaction(userId, transaction)
                         .then(() => {
                             delete userStates[userId];
@@ -298,7 +298,7 @@ async function handleMessage(messageObj) {
                         .catch((error) => {
                             console.error("Error saving transaction:", error);
                             onGoingTransaction = false; // Reset onGoingTransaction in case of error
-                            return sendMessage(messageObj, "An error occurred while processing your transaction. Please try again later.");
+                            return sendMessage(messageObj, "Une erreur s'est produite lors du traitement de votre transaction. Veuillez réessayer plus tard.");
                         });
                 }
                 break;
@@ -306,12 +306,12 @@ async function handleMessage(messageObj) {
             default:
                 delete userStates[userId];
                 onGoingTransaction = false; // Reset onGoingTransaction for invalid action
-                return sendMessage(messageObj, "Invalid action. Please start again.");
+                return sendMessage(messageObj, "Action invalide. Veuillez recommencer.");
         }
     } else {
         onGoingTransaction = false;
         return sendMessage(messageObj,
-            "Invalid Entry!!. Perform an action using the instructions below... \n\nClick /deposit to start a deposit or click \n/withdraw to start a withdrawal or /transactions to see all your transactions");
+            "Entrée invalide !!. Effectuez une action en utilisant les instructions ci-dessous... \n\nCliquez sur /deposit pour commencer un dépôt ou cliquez sur \n/withdraw pour commencer un retrait ou \n/transactions pour voir toutes vos transactions");
     }
 }
 
