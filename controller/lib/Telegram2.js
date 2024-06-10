@@ -8,15 +8,10 @@ const { axiosInstance } = require("./axios");
 // In-memory user state storage
 let userStates = {};
 
-// Global state to store the last used IDs
-
-let userLastIdsForDeposit = {};
-let userLastIdsForWithdrawal = {};
-
-// Variable to track ongoing transactions
 let onGoingTransaction = false;
 
 function sendMessage(messageObj, messageText) {
+    // console.log("Sending message:", messageText);
     return axiosInstance.get("sendMessage", {
         chat_id: messageObj.chat.id,
         text: messageText,
@@ -24,24 +19,30 @@ function sendMessage(messageObj, messageText) {
 }
 
 function handleUserAction(userId, action) {
+    // console.log(`Handling user action: ${action} for user: ${userId}`);
+    // Initialize user state if it doesn't exist
     if (!userStates[userId]) {
         userStates[userId] = {};
     }
 
+    // Update user state
     userStates[userId].action = action;
     userStates[userId].step = 1; // Reset step to the beginning
 }
 
+// Helper function to save a transaction for a user
 async function saveTransaction(userId, transaction) {
     const collection = await getTransactionsCollection();
     await collection.insertOne({ userId, ...transaction });
 }
 
+// Helper function to get transactions for a user
 async function getTransactions(userId) {
     const collection = await getTransactionsCollection();
     return collection.find({ userId }).toArray();
 }
 
+// Format a transaction for display
 function formatTransaction(transaction, index) {
     const date = new Date(transaction.timestamp);
     const formattedDate = date.toLocaleString('en-US', {
@@ -53,9 +54,10 @@ function formatTransaction(transaction, index) {
         minute: '2-digit',
         second: '2-digit',
     });
-    return `Transaction ${index + 1}:\nDate: ${formattedDate}\nID: ${transaction.id}\nAmount: ${transaction.amount}\nPhone Number: ${transaction.phoneNumber}\nNetwork: ${transaction.network}\nType: ${transaction.transactiontype}\nStatus: ${transaction.status}`;
+    return `Transaction ${index + 1}:\nDate: ${formattedDate}\nID: ${transaction.id}\nAmount: ${transaction.amount}\nPhone Number: ${transaction.phoneNumber}\nNetwork: ${transaction.network}\nType: ${transaction.transactiontype}`;
 }
 
+// Format a transaction for display
 function formatTransactionOnlyWithdrawal(transaction, index) {
     const date = new Date(transaction.timestamp);
     const formattedDate = date.toLocaleString('en-US', {
@@ -67,76 +69,61 @@ function formatTransactionOnlyWithdrawal(transaction, index) {
         minute: '2-digit',
         second: '2-digit',
     });
-    return `Transaction ${index + 1}:\nDate: ${formattedDate}\nID: ${transaction.id}\nPhone Number: ${transaction.phoneNumber}\nType: ${transaction.transactiontype}\nStatus: ${transaction.status}`;
+    return `Transaction ${index + 1}:\nDate: ${formattedDate}\nID: ${transaction.id}\nPhone Number: ${transaction.phoneNumber}\nType: ${transaction.transactiontype}`;
 }
 
 async function handleMessage(messageObj) {
+    if (onGoingTransaction) {
+        return sendMessage(messageObj, "Another transaction is in progress. Please wait until it is completed.");
+    }
+
+    onGoingTransaction = true;
+
+    // console.log("Handling message:", messageObj);
     if (!messageObj || !messageObj.chat || !messageObj.chat.id) {
+        // console.error("Invalid message object:", messageObj);
+        onGoingTransaction = false;
         return;
     }
 
     const messageText = messageObj.text || "";
     const userId = messageObj.chat.id;
 
-    const userState = userStates[userId];
+    if (messageText.charAt(0) === "/") {
+        const command = messageText.substr(1).toLowerCase();
+        // console.log(`Received command: ${command}`);
 
-    // Check for ongoing transaction
-    if (onGoingTransaction && (!messageText.startsWith("/cancel") && !messageText.startsWith("/deposit") && !messageText.startsWith("/withdraw"))) {
-        return sendMessage(messageObj, "Another transaction is in progress. Please wait until it is completed or type /cancel to terminate the current transaction.");
-    }
-
-    if (messageText === "/deposit" || messageText === "/withdraw" || messageText === "/start" || messageText === "/cancel" || messageText === "/transactions" || messageText === "deposit" || messageText === "withdraw" || messageText === "start" || messageText === "cancel" || messageText === "transactions") {
-
-        const command = messageText.charAt(0) === "/" ? messageText.substr(1).toLowerCase() : messageText.toLowerCase()
-        onGoingTransaction = true;
         switch (command) {
             case "start":
-                const startMessage = "Hi! Welcome to betfundr, let's help you process your transaction swiftly.\n\nClick /deposit to start a deposit process or click /withdraw to start a withdrawal process or /transactions to see all your previous transactions";
-
+                // console.log("Starting transaction");
                 delete userStates[userId];
-                onGoingTransaction = false; // Reset onGoingTransaction when starting
-                return sendMessage(messageObj, startMessage);
+                onGoingTransaction = false;
+                return sendMessage(messageObj, "Hi! Welcome to betfundr, let's help you process your transaction swiftly \n\nClick /deposit to start a deposit process or click /withdraw to start a withdrawal process or /transactions to see all your previous transactions");
 
             case "deposit":
+                // console.log("Initiating deposit process");
+                delete userStates[userId];
                 handleUserAction(userId, "deposit");
-                // Set onGoingTransaction to true when starting a deposit
-                const lastDepositId = userLastIdsForDeposit[userId] || null;
-                const depositMessage = lastDepositId
-                    ? `You are about to make a deposit, input your id or use your last ID by clicking the ID below: \n\nPrevious ID: /${lastDepositId}.\n\nOr Press /cancel to terminate the current transaction process`
-                    : "You are about to make a deposit, input your id.(e.g: 34377834).\n\nOr Press /cancel to terminate the current transaction process";
                 onGoingTransaction = false;
-                return sendMessage(messageObj, depositMessage);
+                return sendMessage(messageObj, "You are about to make a deposit, input your id.(e.g: 34377834).\n\nOr Press /cancel to terminate the current transaction process");
 
             case "withdraw":
-                handleUserAction(userId, "withdraw");
-                // Set onGoingTransaction to true when starting a withdrawal
-                const lastWithdrawId = userLastIdsForWithdrawal[userId] || null;
-                const withdrawMessage = lastWithdrawId
-                    ? `You are about to make a withdrawal, reply with your id or use your last ID by clicking the ID below: \n\nPrevious ID: /${lastWithdrawId}.
-                    \n\nOr Press /cancel to terminate the current transaction process \n\nProcédure de retrait 
-
- 1-  S’assurer d’avoir repli son PROFIL PERSONNEL conformément aux informations de votre carde d’identité ou passeport 
-2- Sélectionner le menu retirer et ensuite 1XBET ESPÈCES
-3- Entrer le montant à retirer 
-5- Choisir ville: Parakou
-6-Choisir Rue : Zongo Rue 447  24/7
-7- Confirmer la transaction avec le CODE SMS obtenu sur notre numéro de téléphone 
-8- Patienter et une fois que le statut affiche APPROUVÉ , sélectionner OBTENIR LE CODE 
-9- Copier le code obtenu ( ce code contient quatre caractères) \n\nOr Press /cancel to terminate the current transaction process`
-                    : "You are about to make a withdrawal, reply with your id.(e.g: 34377834).\n\nProcédure de retrait:\n\n1. S’assurer d’avoir rempli son PROFIL PERSONNEL conformément aux informations de votre carte d’identité ou passeport.\n2. Sélectionner le menu retirer et ensuite 1XBET ESPÈCES.\n3. Entrer le montant à retirer.\n4. Choisir ville: Parakou.\n5. Choisir Rue: Zongo Rue 447  24 / 7.\n6. Confirmer la transaction avec le CODE SMS obtenu sur notre numéro de téléphone.\n7. Patienter et une fois que le statut affiche APPROUVÉ, sélectionner OBTENIR LE CODE.\n8. Copier le code obtenu (ce code contient quatre caractères).\n\nOr Press /cancel to terminate the current transaction process"
-                    ;
-                onGoingTransaction = false;
-                return sendMessage(messageObj, withdrawMessage);
-
-            case "cancel":
+                // console.log("Initiating withdrawal process");
                 delete userStates[userId];
-                onGoingTransaction = false; // Reset onGoingTransaction when canceling
+                handleUserAction(userId, "withdraw");
+                onGoingTransaction = false;
+                return sendMessage(messageObj, "You are about to make a withdrawal, input your id.(e.g: 34377834).\n\nOr Press /cancel to terminate the current transaction process");
+            case "cancel":
+                // console.log("Cancelling transaction process");
+                delete userStates[userId];
+                onGoingTransaction = false;
                 return sendMessage(messageObj, "Your ongoing transaction has been cancelled. \n\nClick /deposit to start a deposit process, \n/withdraw to start a withdrawal process or \n/transactions to see previous transactions");
-
             case "transactions":
-
+                // console.log("Fetching transactions");
+                delete userStates[userId];
                 const transactions = await getTransactions(userId);
                 if (transactions.length === 0) {
+                    onGoingTransaction = false;
                     return sendMessage(messageObj, "No transactions found.");
                 }
                 const transactionList = transactions.map((t, index) => {
@@ -146,59 +133,47 @@ async function handleMessage(messageObj) {
                         return formatTransaction(t, index);
                     }
                 }).join("\n\n");
+
                 onGoingTransaction = false;
-                console.log(transactionList)
-                if (transactionList.length > 500) {
-                    return sendMessage(messageObj, `Your transactions cant be returned because it too lengthy\n\nType /deposit to perform a deposit and \n/withdraw to perform a withdrawal.`);
-
-                } else {
-                    return sendMessage(messageObj, `Your transactions:\n\n${transactionList}\n\nType /deposit to perform a deposit and \n/withdraw to perform a withdrawal.`);
-
-                }
-
+                return sendMessage(messageObj, `Your transactions:\n\n${transactionList}\n\nType /deposit to perform a deposit and \n/withdraw to perform a withdrawal.`);
 
             default:
+                // console.log("Invalid command");
                 onGoingTransaction = false;
                 return sendMessage(messageObj, "Wrong entry");
         }
-    }
+    } else {
+        // Handle user inputs based on their current action
+        const userState = userStates[userId];
 
-    // Handle user inputs based on their current action
-    if (userState && userState.action) {
-        onGoingTransaction = true;
+        if (!userState || !userState.action) {
+            onGoingTransaction = false;
+            return sendMessage(messageObj,
+                "Invalid Entry!!. Perform an action using the instructions below... \n\nClick /deposit to start a deposit or click \n/withdraw to start a withdrawal or \n/transactions to see all your transactions"); // Handle as a normal message if no action is set
+        }
+
         switch (userState.action) {
             case "deposit":
                 if (userState.step === 1) {
-                    const id = messageText.startsWith('/') ? messageText.substr(1) : messageText;
-
-                    // Check if the id is numeric
-                    if (!/^\d+$/.test(id)) {
-                        const lastDepositId = userLastIdsForDeposit[userId] || "No previous ID";
-                        console.log(lastDepositId)
+                    // Validate the id input
+                    if (!/^\d+$/.test(messageText)) {
                         onGoingTransaction = false;
-                        if (lastDepositId === "No previous ID") {
-                            return sendMessage(messageObj, `Invalid ID. Input your ID.(e.g 23423434) \n\nOr Press /cancel to terminate the current transaction process`);
-                        } else {
-                            return sendMessage(messageObj, `Invalid ID. Input your ID or use your last ID by clicking the ID below: \n\nPrevious ID: /${lastDepositId}\n\nOr Press /cancel to terminate the current transaction process`);
-                        }
-
+                        return sendMessage(messageObj, "Invalid ID. Please enter a numeric ID.(e.g: 34377834)");
                     }
-                    userState.id = id;
-                    userLastIdsForDeposit[userId] = id; // Save the ID in the separate state
+                    userState.id = messageText;
                     userState.step++;
-
                     onGoingTransaction = false;
                     return sendMessage(messageObj, "Please input the amount you wish to deposit.(e.g: 5000).\n\n Or Press /cancel to terminate the current transaction process");
                 } else if (userState.step === 2) {
-                    console.log("done")
-                    const amount = parseFloat(messageText);
-                    if (isNaN(amount) || amount < 200 || !/^\d+(\.\d{1,2})?$/.test(messageText)) {
-                        return sendMessage(messageObj, "Invalid amount. Please enter a numeric amount greater than or equal to 200 (e.g., 5000).\n\nOr Press /cancel to terminate the current transaction process");
+                    // Validate the amount input
+                    if (!/^\d+(\.\d{1,2})?$/.test(messageText)) {
+                        onGoingTransaction = false;
+                        return sendMessage(messageObj, "Invalid amount. Please enter a numeric amount.(e.g: 5000).\n\nOr Press /cancel to terminate the current transaction process");
                     }
                     userState.amount = messageText;
                     userState.step++;
                     onGoingTransaction = false;
-                    return sendMessage(messageObj, "Please enter your phone number (without country code).(e.g: 99999999).\n\nOr Press /cancel to terminate the current transaction process");
+                    return sendMessage(messageObj, "Please enter your phone number (without country code) together with your network.(e.g: 99999999/MTN).\n\nOr Press /cancel to terminate the current transaction process");
                 } else if (userState.step === 3) {
                     // Validate the phone number input
                     if (!/^\d{8}$/.test(messageText)) { // Assuming phone number length is 8 digits
@@ -208,39 +183,36 @@ async function handleMessage(messageObj) {
                     userState.phoneNumber = messageText;
                     userState.step++;
                     onGoingTransaction = false;
-                    return sendMessage(messageObj, "Please enter your network. Click on your choice. \n\n   /MTN        /MOOV\n\nOr Press /cancel to terminate the current transaction process");
-                }
-                else if (userState.step === 4) {
-                    const updatedMessageText = messageText.startsWith('/') ? messageText.substr(1) : messageText;
+                    return sendMessage(messageObj, "Please enter your network. Make sure they are written in upper cases. (e.g: MTN or MOOV).\n\nOr Press /cancel to terminate the current transaction process");
+                } else if (userState.step === 4) {
+                    // Validate the network input
                     const validNetworks = ["MTN", "MOOV"];
-                    if (!validNetworks.includes(updatedMessageText)) {
+                    if (!validNetworks.includes(messageText)) {
                         onGoingTransaction = false;
-                        return sendMessage(messageObj, "Invalid network. Please Click on your choice. \n\n   /MTN        /MOOV\n\nOr Press /cancel to terminate the current transaction process");
-
+                        return sendMessage(messageObj, "Invalid network. Please enter your network again. Make sure they are written in upper cases. (e.g: MTN or MOOV). \n\nOr Press /cancel to terminate the current transaction process");
                     }
-
+                    userState.network = messageText;
+                    // Final step, reset user state after processing
                     const transaction = {
                         id: userState.id,
                         amount: userState.amount,
                         phoneNumber: `+229${userState.phoneNumber}`,
-                        network: updatedMessageText,
+                        network: userState.network,
                         transactiontype: 'deposit',
-                        timestamp: new Date().toISOString(),
-                        status: "pending"
+                        timestamp: new Date().toISOString()
                     };
 
                     saveTransaction(userId, transaction).then(() => {
-                        delete userStates[userId].action;
-                        delete userStates[userId].step;
-                        onGoingTransaction = false; // Reset onGoingTransaction when transaction is complete
+                        delete userStates[userId];
 
-                        return new Promise((resolve) => setTimeout(resolve, 100));
+                        // Add a delay of 5 seconds
+                        return new Promise((resolve) => setTimeout(resolve, 5000));
                     }).then(() => {
                         onGoingTransaction = false;
-                        return sendMessage(messageObj, `Deposit of ${userState.amount} is currently procesing for ID ${userState.id} on ${updatedMessageText} network, using momo number ${userState.phoneNumber}. \n\n Click /deposit to start another deposit or click /withdraw to start a withdrawal or /transactions to see all your transactions`);
+                        return sendMessage(messageObj, `Deposit of ${userState.amount} has been processed for ID ${userState.id} on ${userState.network} network, using momo number ${userState.phoneNumber}. \n\n Click /deposit to start another deposit or click /withdraw to start a withdrawal or \n/transactions to see all your transactions`);
                     }).catch((error) => {
                         console.error("Error saving transaction:", error);
-                        onGoingTransaction = false; // Reset onGoingTransaction in case of error
+                        onGoingTransaction = false;
                         return sendMessage(messageObj, "An error occurred while processing your transaction. Please try again later.");
                     });
                 }
@@ -248,26 +220,19 @@ async function handleMessage(messageObj) {
 
             case "withdraw":
                 if (userState.step === 1) {
-                    if (userState.step === 1) {
-                        const id = messageText.startsWith('/') ? messageText.substr(1) : messageText;
-                        // Check if the id is numeric
-                        if (!/^\d+$/.test(id)) {
-                            const lastWithdrawId = userLastIdsForWithdrawal[userId] || "No previous ID";
-                            onGoingTransaction = false;
-                            if (lastWithdrawId === "No previous ID") {
-                                return sendMessage(messageObj, `Invalid ID. Input your ID.(e.g 23423434) \n\nOr Press /cancel to terminate the current transaction process`);
-                            } else {
-                                return sendMessage(messageObj, `Invalid ID. Input your ID or use your last ID by clicking the ID below: \n\nPrevious ID: /${lastWithdrawId}\n\nOr Press /cancel to terminate the current transaction process`);
-                            }
-                        }
-                        userState.id = id;
-                        userLastIdsForWithdrawal[userId] = id; // Save the ID in the separate state
-                        userState.step++;
+                    // Validate the id input
+                    if (!/^\d+$/.test(messageText)) {
                         onGoingTransaction = false;
-                        return sendMessage(messageObj, "Please input your withdrawal code. \n\nOr Press /cancel to terminate the current transaction process");
+                        return sendMessage(messageObj, "Invalid ID. Please enter a numeric ID.(e.g: 34377834). \n\nOr Press /cancel to terminate the current transaction process");
                     }
+                    userState.id = messageText;
+                    userState.step++;
+                    onGoingTransaction = false;
+                    return sendMessage(messageObj, "Please input your withdrawal code. \n\nOr Press /cancel to terminate the current transaction process");
                 } else if (userState.step === 2) {
+                    // Validate the withdrawal code input
                     if (!/^[a-zA-Z0-9]+$/.test(messageText)) { // Assuming withdrawal code can be alphanumeric, numeric, or alphabetic
+                        onGoingTransaction = false;
                         return sendMessage(messageObj, "Invalid withdrawal code. Please enter an alphanumeric code (e.g: 343778frgr), numeric code (e.g: 123456), or alphabetic code (e.g: ABCDEF). \n\nOr Press /cancel to terminate the current transaction process");
                     }
 
@@ -276,42 +241,41 @@ async function handleMessage(messageObj) {
                     onGoingTransaction = false;
                     return sendMessage(messageObj, "Please enter your momo number (without country code). \n\nOr Press /cancel to terminate the current transaction process");
                 } else if (userState.step === 3) {
+                    // Validate the phone number input
                     if (!/^\d{8}$/.test(messageText)) { // Assuming phone number length is 8 digits
+                        onGoingTransaction = false;
                         return sendMessage(messageObj, "Invalid phone number. Please enter a valid numeric phone number. \n\nOr Press /cancel to terminate the current transaction process");
                     }
                     userState.phoneNumber = messageText;
+                    // Final step, reset user state after processing
                     const transaction = {
                         id: userState.id,
                         withdrawalCode: userState.withdrawalCode,
                         phoneNumber: `+229${userState.phoneNumber}`,
                         transactiontype: 'withdraw',
-                        timestamp: new Date().toISOString(),
-                        status: "pending"
+                        timestamp: new Date().toISOString()
                     };
-                    sendMessage(messageObj, `Withdrawal for ID ${userState.id} with withdrawal code ${userState.withdrawalCode} and number ${userState.phoneNumber} is currently processing.\n\nClick /withdraw to start another withdrawal or /deposit to perform a deposit or /transactions to see all your transactions.`);
+                    sendMessage(messageObj, `Withdrawal for ID ${userState.id} with withdrawal code ${userState.withdrawalCode} and number ${userState.phoneNumber} has been processed.\n\nClick /withdraw to start another withdrawal or /deposit to perform a deposit or \n/transactions to see all your transactions.`);
                     saveTransaction(userId, transaction)
                         .then(() => {
                             delete userStates[userId];
-                            onGoingTransaction = false; // Reset onGoingTransaction when transaction is complete
+                            onGoingTransaction = false;
                             return;
                         })
                         .catch((error) => {
-                            console.error("Error saving transaction:", error);
-                            onGoingTransaction = false; // Reset onGoingTransaction in case of error
+                            // console.error("Error saving transaction:", error);
+                            onGoingTransaction = false;
                             return sendMessage(messageObj, "An error occurred while processing your transaction. Please try again later.");
                         });
                 }
                 break;
 
             default:
+                // If the action is not recognized, reset the user state
                 delete userStates[userId];
-                onGoingTransaction = false; // Reset onGoingTransaction for invalid action
+                onGoingTransaction = false;
                 return sendMessage(messageObj, "Invalid action. Please start again.");
         }
-    } else {
-        onGoingTransaction = false;
-        return sendMessage(messageObj,
-            "Invalid Entry!!. Perform an action using the instructions below... \n\nClick /deposit to start a deposit or click \n/withdraw to start a withdrawal or /transactions to see all your transactions");
     }
 }
 
