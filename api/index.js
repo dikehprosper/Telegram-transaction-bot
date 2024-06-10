@@ -18,4 +18,3 @@ app.listen(PORT, function (err) {
     console.log("Server listening on PORT", PORT)
 })
 
-// https://api.telegram.org/bot7234815519:AAG9ddYHBs7b0XzXrCR3o9iXt-FgVMz8kG4/setWebhook?url=https://e71d-197-210-227-55.ngrok-free.app/

@@ -4,7 +4,7 @@
 const { MongoClient } = require('mongodb');
 
 // MongoDB connection URI and database name
-const uri = "mongodb+srv://Dikeprosper:Prosper12@espece.koqsh5m.mongodb.net/"; // Replace with your MongoDB connection string
+const uri = process.env.MY_URI; // Replace with your MongoDB connection string
 const dbName = "betfundr";
 
 // Create a new MongoClient
